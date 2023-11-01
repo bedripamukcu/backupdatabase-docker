@@ -1,0 +1,1 @@
+0 0 * * * /backupdb.sh >> /var/log/cron_output.log 2>&1

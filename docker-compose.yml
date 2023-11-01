@@ -1,0 +1,45 @@
+version: '3'
+
+networks:
+  db-network:
+    external: true
+
+services:
+  db:
+    image: mysql:8.0.22
+    container_name: yourcontainername
+    command: --default-authentication-plugin=mysql_native_password --wait_timeout=31536000 --interactive_timeout=31536000 --skip-name-resolve
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=ihTnSNk3iHKQc66CuVqy --skip-name-resolve
+    volumes:
+      - ./path1/path2:/path3/path4/mysql:delegated #Host makinedeki ./path1/path2 klasörünü konteynerdeki /path3/path4/mysql klasörüne bağlar. Bu, veritabanı dosyalarının persistant (kalıcı) olmasını sağlar.
+      - ./data/init:/docker-entrypoint-initdb.d/:ro
+    networks:
+      - your-network
+    ports:
+      - port:port
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin #Bu, PhpMyAdmin'in herhangi bir MySQL sunucusuna bağlanabileceği anlamına gelir.
+    restart: always
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=yourcontainername
+    volumes:
+      - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+    ports:
+      - port1:port2    #Host makinedeki port1 portu, konteynerdeki port2 portuna yönlendirilir. Bu, tarayıcınızda http://localhost:port1 adresine giderek PhpMyAdmin arayüzüne erişebilmenizi sağlar.
+    depends_on:
+      - db
+    networks:
+      - db-network
+  cron:
+    image: leojonathanoh/docker-alpine-cron:mysqlclient-dev
+    user: root
+    volumes:
+      - ./backupdb.sh:/backupdb.sh
+      - /path1/path2:/path1/path2 #yedekleme dosya yolu
+      - ./crontab:/var/spool/cron/crontabs/root #Host makinedeki crontab dosyasını konteynerdeki root kullanıcısının crontab dosyasına bağlar. Bu dosya, hangi cron görevlerinin ve ne zaman çalıştırılacağını tanımlar.
+    command: [ "crond", "-f", "-L", "/dev/stdout" ]
+    networks:
+      - db-network
